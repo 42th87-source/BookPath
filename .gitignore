@@ -1,0 +1,41 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Data (선택: API key 보호)
+.env.local
+*.key
+*.secret
+
+# Temporary
+.tmp/
+temp/
+*.log
+
+# Keep data files (공공데이터)
+!data/
+!scripts/
