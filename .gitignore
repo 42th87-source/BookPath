@@ -43,6 +43,10 @@ temp/
 *.xls
 *.csv
 
+# 분석용 원본 데이터는 예외 허용
+!2025 국민독서실태조사. 학생.xlsx
+!전국대학별학과정보표준데이터.csv
+
 # Keep data files (공공데이터)
 !data/
 !scripts/
