@@ -55,65 +55,67 @@ def get_rows(row_list, col_start, col_end):
 
 # ── Q6 독서 도움 정도 ─────────────────────────────────────────────────────────
 def make_q6():
-    q6_headers = ['매우 도움이 된다', '어느 정도 도움이 된다', '보통이다',
-                  '별로 도움이 되지 않는다', '전혀 도움이 되지 않는다']
     q6 = get_rows([559, 560, 561, 562], 3, 8)
 
-    fig, axes = plt.subplots(1, 2, figsize=(15, 6.5))
+    # 3개 범주로 합산 (겹침 방지)
+    vals_3 = [
+        q6['전체'][0],                          # 매우 도움이 된다
+        q6['전체'][1],                          # 어느 정도 도움이 된다
+        q6['전체'][2],                          # 보통이다
+        q6['전체'][3] + q6['전체'][4],          # 도움이 되지 않는다 (합산)
+    ]
+    labels_3 = [
+        f'매우 도움이 된다\n{vals_3[0]:.1f}%',
+        f'어느 정도 도움이 된다\n{vals_3[1]:.1f}%',
+        f'보통이다\n{vals_3[2]:.1f}%',
+        f'도움이 되지 않는다\n{vals_3[3]:.1f}%',
+    ]
+    wcolors = ['#1D4ED8', '#3B82F6', '#93C5FD', '#FCA5A5']
+    explode = (0.06, 0.03, 0, 0)
+
+    fig, ax = plt.subplots(figsize=(10, 8))
     fig.patch.set_facecolor(WHITE)
+    ax.set_facecolor(WHITE)
 
-    # 왼쪽: 도넛 차트
-    ax1 = axes[0]
-    wcolors = ['#1D4ED8', '#3B82F6', '#93C5FD', '#FCA5A5', '#EF4444']
-    explode = (0.05, 0.02, 0, 0, 0)
-    ax1.pie(q6['전체'], labels=q6_headers, autopct='%1.1f%%',
-            colors=wcolors, explode=explode, startangle=90,
-            wedgeprops=dict(width=0.6),
-            textprops={'fontsize': 13})
-    helpful = q6['전체'][0] + q6['전체'][1]
-    ax1.text(0, 0, f'{helpful:.1f}%\n도움이 된다',
-             ha='center', va='center',
-             fontsize=17, fontweight='bold', color='#1D4ED8')
-    ax1.set_title('독서가 도움이 된다고 생각하는가?\n(전체, N=2,486)',
-                  fontsize=15, fontweight='bold', pad=14)
+    wedges, texts = ax.pie(
+        vals_3,
+        labels=None,           # 직접 라벨 없이 수동 배치
+        colors=wcolors,
+        explode=explode,
+        startangle=90,
+        wedgeprops=dict(width=0.62, edgecolor='white', linewidth=2),
+    )
 
-    # 오른쪽: 누적 막대
-    ax2 = axes[1]
-    school_list = ['초등학교', '중학교', '고등학교']
-    x = np.arange(len(school_list))
-    bar_colors = ['#1D4ED8', '#3B82F6', '#93C5FD', '#FCA5A5', '#EF4444']
-    bottoms = np.zeros(3)
-    for i, (h, c) in enumerate(zip(q6_headers, bar_colors)):
-        vals = [q6[s][i] for s in school_list]
-        bars = ax2.bar(x, vals, bottom=bottoms, color=c, label=h, width=0.5)
-        for j, (bar, v) in enumerate(zip(bars, vals)):
-            if v > 6:
-                ax2.text(bar.get_x() + bar.get_width()/2,
-                         bottoms[j] + v/2,
-                         f'{v:.1f}%',
-                         ha='center', va='center',
-                         fontsize=11, color='white', fontweight='bold')
-        bottoms += np.array(vals)
+    # 각 조각에 레이블 수동 배치 (겹침 방지)
+    label_dist = 1.28
+    for i, (wedge, label, val) in enumerate(zip(wedges, labels_3, vals_3)):
+        angle = (wedge.theta2 + wedge.theta1) / 2
+        x = label_dist * np.cos(np.deg2rad(angle))
+        y = label_dist * np.sin(np.deg2rad(angle))
+        ha = 'left' if x > 0 else 'right'
+        ax.annotate(
+            label,
+            xy=(0.75 * np.cos(np.deg2rad(angle)),
+                0.75 * np.sin(np.deg2rad(angle))),
+            xytext=(x, y),
+            ha=ha, va='center',
+            fontsize=14, color=wcolors[i], fontweight='bold',
+            linespacing=1.4,
+            arrowprops=dict(arrowstyle='-', color=wcolors[i], lw=1.2),
+        )
 
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(school_list, fontsize=14)
-    ax2.set_ylabel('비율 (%)', fontsize=13)
-    ax2.set_ylim(0, 112)
-    ax2.set_title('학교급별 독서 도움 인식',
-                  fontsize=15, fontweight='bold')
-    ax2.legend(loc='lower right', fontsize=11, framealpha=0.9)
-    ax2.spines['top'].set_visible(False)
-    ax2.spines['right'].set_visible(False)
+    # 중앙 핵심 수치
+    helpful = vals_3[0] + vals_3[1]
+    ax.text(0, 0.08, f'{helpful:.1f}%',
+            ha='center', va='center',
+            fontsize=42, fontweight='bold', color='#1D4ED8')
+    ax.text(0, -0.18, '독서가 도움이 된다',
+            ha='center', va='center',
+            fontsize=16, color='#1D4ED8')
 
-    # 화살표 어노테이션
-    ax2.annotate('독서의 가치는 알지만\n탐색 도구가 부재',
-                 xy=(2, 86), xytext=(2.3, 104),
-                 fontsize=13, color=BLUE, fontweight='bold',
-                 arrowprops=dict(arrowstyle='->', color=BLUE, lw=1.8),
-                 linespacing=1.4)
+    ax.set_title('독서가 도움이 된다고 생각하는가? (전체, N=2,486)\n2025 국민독서실태조사',
+                 fontsize=17, fontweight='bold', pad=18, color=DARK)
 
-    plt.suptitle('Q6. 독서의 도움 정도 (2025 국민독서실태조사)',
-                 fontsize=17, fontweight='bold', y=1.01)
     plt.tight_layout()
     path = f'{OUT}/q6_reading_helpfulness.png'
     plt.savefig(path, dpi=180, bbox_inches='tight', facecolor=WHITE)
