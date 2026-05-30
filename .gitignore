@@ -35,6 +35,13 @@ yarn-error.log
 .tmp/
 temp/
 *.log
+*.progress
+
+# 대용량·불필요 파일
+*.pdf
+*.xlsx
+*.xls
+*.csv
 
 # Keep data files (공공데이터)
 !data/
