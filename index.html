@@ -37,6 +37,21 @@
             box-shadow: 0 1px 8px rgba(0,0,0,0.06);
         }
         .logo { font-size: 1.4rem; font-weight: 800; color: #4f46e5; cursor: pointer; }
+        .shelf-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 1.1rem;
+            background: #f1f5f9;
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .shelf-btn:hover { background: #e2e8f0; }
         .logo span { font-weight: 400; font-size: 0.9rem; color: var(--muted); margin-left: 0.5rem; }
 
         /* ── Breadcrumb ── */
@@ -256,6 +271,23 @@
         .modal-author { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; }
         .modal-sec { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 1.1rem 0 0.5rem; }
         .modal-desc { font-size: 0.875rem; line-height: 1.75; color: var(--text); }
+        .add-shelf-btn {
+            display: block;
+            width: 100%;
+            margin-top: 1.25rem;
+            padding: 0.65rem;
+            background: #4f46e5;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .add-shelf-btn:hover { background: #4338ca; }
+        .add-shelf-btn.saved { background: #10b981; }
+        .add-shelf-btn.saved:hover { background: #059669; }
 
         @media (max-width: 600px) {
             main { padding: 0.75rem 1rem 3rem; }
@@ -269,6 +301,7 @@
 
 <header>
     <div class="logo" onclick="goHome()">📚 BookPath<span>책으로 찾는 나의 진로</span></div>
+    <a class="shelf-btn" href="my-shelf.html">🗂️ 내 서재</a>
 </header>
 
 <nav id="breadcrumb"></nav>
@@ -515,7 +548,11 @@ function openBook(i) {
             ? `<div class="modal-sec">🔖 키워드</div>
                <div class="tag-row">${b.student_tags.map(t=>`<span class="tag student">${esc(t)}</span>`).join('')}</div>`
             : ''}
+        <button id="shelf-toggle-btn" class="add-shelf-btn" onclick="toggleShelf('${esc(b.title)}')">
+            🗂️ 서재에 담기
+        </button>
     `;
+    updateShelfBtn(b.title);
     document.getElementById('overlay').classList.add('open');
 }
 
@@ -528,6 +565,42 @@ function onOverlayClick(e) {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── 서재 ─────────────────────────────────────────────────────────────────────
+const SHELF_KEY = 'bookpath_shelf';
+
+function getShelf() {
+    try { return JSON.parse(localStorage.getItem(SHELF_KEY)) || []; }
+    catch { return []; }
+}
+
+function isInShelf(title) {
+    return getShelf().some(b => b.title === title);
+}
+
+function toggleShelf(title) {
+    const shelf = getShelf();
+    const idx = shelf.findIndex(b => b.title === title);
+    if (idx === -1) {
+        const book = window._shownBooks?.find(b => b.title === title);
+        if (book) {
+            shelf.push({ ...book, _saved_at: new Date().toLocaleDateString('ko-KR') });
+            localStorage.setItem(SHELF_KEY, JSON.stringify(shelf));
+        }
+    } else {
+        shelf.splice(idx, 1);
+        localStorage.setItem(SHELF_KEY, JSON.stringify(shelf));
+    }
+    updateShelfBtn(title);
+}
+
+function updateShelfBtn(title) {
+    const btn = document.getElementById('shelf-toggle-btn');
+    if (!btn) return;
+    const saved = isInShelf(title);
+    btn.textContent = saved ? '✅ 서재에 담김' : '🗂️ 서재에 담기';
+    btn.className = 'add-shelf-btn' + (saved ? ' saved' : '');
+}
 
 init();
 </script>
