@@ -57,41 +57,58 @@
         /* ── Search ── */
         .search-wrap {
             flex: 1;
-            max-width: 420px;
+            max-width: 460px;
             margin: 0 1.25rem;
             position: relative;
         }
-        .search-input {
-            width: 100%;
-            padding: 0.5rem 2.5rem 0.5rem 1rem;
-            border: 1.5px solid var(--border);
-            border-radius: 20px;
-            font-size: 0.875rem;
-            background: var(--bg);
-            color: var(--text);
-            transition: border-color 0.15s, box-shadow 0.15s;
-            outline: none;
-        }
-        .search-input:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
-            background: white;
-        }
-        .search-clear {
+        .search-icon {
             position: absolute;
-            right: 0.7rem;
+            left: 0.85rem;
             top: 50%;
             transform: translateY(-50%);
-            background: none;
-            border: none;
             color: var(--muted);
-            font-size: 1rem;
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 2.5rem 0.6rem 2.3rem;
+            border: 2px solid #c7d2fe;
+            border-radius: 24px;
+            font-size: 0.9rem;
+            background: #f5f3ff;
+            color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+            outline: none;
+        }
+        .search-input::placeholder { color: #a5b4fc; }
+        .search-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+            background: white;
+        }
+        .search-input:focus::placeholder { color: #c4b5fd; }
+        .search-clear {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e0e7ff;
+            border: none;
+            color: #4f46e5;
+            font-size: 0.8rem;
+            font-weight: 700;
             cursor: pointer;
             display: none;
             line-height: 1;
-            padding: 0.1rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
         }
-        .search-clear.show { display: block; }
+        .search-clear.show { display: flex; }
+        .search-clear:hover { background: #c7d2fe; }
         .search-result-header {
             display: flex;
             align-items: center;
@@ -355,6 +372,7 @@
 <header>
     <div class="logo" onclick="goHome()">📚 BookPath<span>책으로 찾는 나의 진로</span></div>
     <div class="search-wrap">
+        <span class="search-icon">🔍</span>
         <input class="search-input" id="search-input" type="text"
                placeholder="책 제목, 저자, 진로 검색..."
                oninput="onSearch(this.value)">
@@ -656,12 +674,23 @@ function restoreView() {
 
 function renderSearchResults(query) {
     const q = query.toLowerCase();
-    const results = books.filter(b =>
-        b.title?.toLowerCase().includes(q) ||
-        b.author?.toLowerCase().includes(q) ||
-        (b.career_tags || []).some(t => t.toLowerCase().includes(q)) ||
-        (b.student_tags || []).some(t => t.toLowerCase().includes(q))
-    );
+    // 관련도 점수 계산
+    const scored = books.map(b => {
+        let score = 0;
+        const title = b.title?.toLowerCase() || '';
+        const author = (b.author || '').toLowerCase();
+        if (title === q) score += 20;                          // 제목 완전 일치
+        else if (title.startsWith(q)) score += 12;            // 제목 시작
+        else if (title.includes(q)) score += 6;               // 제목 포함
+        if (author.includes(q)) score += 4;                   // 저자 일치
+        if ((b.career_tags || []).some(t => t.toLowerCase() === q)) score += 8;   // 진로 완전 일치
+        else if ((b.career_tags || []).some(t => t.toLowerCase().includes(q))) score += 3; // 진로 포함
+        if ((b.student_tags || []).some(t => t.toLowerCase().includes(q))) score += 2;    // 키워드 포함
+        return { b, score };
+    }).filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    const results = scored.map(({ b }) => b);
 
     // 브레드크럼 검색 모드로 변경
     document.getElementById('breadcrumb').innerHTML =
