@@ -4,154 +4,98 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.font_manager as fm
 
-# 한글 폰트 설정
+# 한글 폰트
 for fname in fm.findSystemFonts():
-    if 'malgun' in fname.lower() or 'nanumgothic' in fname.lower():
+    if 'malgun' in fname.lower():
         plt.rcParams['font.family'] = fm.FontProperties(fname=fname).get_name()
         break
 
-fig, ax = plt.subplots(figsize=(16, 7))
-ax.set_xlim(0, 16)
-ax.set_ylim(0, 7)
+# PPT 디자인 색상
+WHITE   = '#ffffff'
+DARK    = '#111827'
+BLUE    = '#2563eb'
+BLUE_LT = '#eff6ff'
+BLUE_MD = '#bfdbfe'
+MUTED   = '#6b7280'
+GRAY_BG = '#f9fafb'
+GRAY_BD = '#e5e7eb'
+RED_C   = '#ef4444'
+GREEN_C = '#16a34a'
+NUM_C   = '#3b82f6'
+
+def txt(ax, s, x, y, size=12, bold=False, color=DARK, ha='center', va='center'):
+    ax.text(x, y, s, ha=ha, va=va, fontsize=size,
+            fontweight='bold' if bold else 'normal',
+            color=color, zorder=4)
+
+def rbox(ax, x, y, w, h, fc=BLUE_LT, ec=BLUE_MD, lw=1.2, r=0.06):
+    ax.add_patch(mpatches.FancyBboxPatch(
+        (x, y), w, h, boxstyle=f"round,pad={r}",
+        facecolor=fc, edgecolor=ec, linewidth=lw, zorder=3))
+
+# ── 캔버스 ────────────────────────────────────────────────────────────────────
+fig, ax = plt.subplots(figsize=(17, 6.2))
+ax.set_xlim(0, 17)
+ax.set_ylim(0, 6.2)
 ax.axis('off')
-fig.patch.set_facecolor('white')
+fig.patch.set_facecolor(WHITE)
+ax.set_facecolor(WHITE)
 
-# 색상
-INDIGO  = '#4f46e5'
-PURPLE  = '#7c3aed'
-GREEN   = '#10b981'
-GRAY    = '#f1f5f9'
-DARK    = '#1e293b'
-MUTED   = '#64748b'
-WHITE   = 'white'
-
+# ── 흐름 단계 ─────────────────────────────────────────────────────────────────
 steps = [
-    {
-        'icon': 'API',
-        'title': '사서 추천 도서\nOpen API',
-        'desc': '한국문화정보원',
-        'stat': '7,085건 수집',
-        'color': INDIGO,
-    },
-    {
-        'icon': 'Filter',
-        'title': '비도서\n필터링',
-        'desc': '공지·행사 제거',
-        'stat': '→ 5,050권',
-        'color': PURPLE,
-    },
-    {
-        'icon': 'AI ①',
-        'title': 'AI 1단계\n태깅',
-        'desc': 'KDC·진로·키워드',
-        'stat': '약 2시간',
-        'color': '#7c3aed',
-    },
-    {
-        'icon': 'AI ②',
-        'title': 'AI 2단계\nthemes',
-        'desc': 'cross-KDC 연결키',
-        'stat': '약 30분',
-        'color': '#059669',
-    },
-    {
-        'icon': 'Web',
-        'title': 'BookPath\n웹 서비스',
-        'desc': 'GitHub Pages',
-        'stat': '5,050권 서비스',
-        'color': INDIGO,
-    },
+    ('01', '데이터 수집',       '사서 추천 도서\nOpen API\n7,085건',    False),
+    ('02', '비도서 필터링',     '공지·행사 제거\n→ 5,050권',            False),
+    ('03', 'AI 1단계 태깅',     'KDC·진로태그\n키워드 생성\n약 2시간',  False),
+    ('04', 'AI 2단계 Themes',   'cross-KDC\n연결 키워드\n약 30분',      False),
+    ('05', '웹 서비스 제공',    'BookPath\n5,050권 서비스',              True),
 ]
 
-box_w = 2.2
-box_h = 2.8
-gap   = 0.6
-start_x = 0.5
-y_top = 4.8
+sw = 2.72
+gw = 0.25
+total = len(steps) * sw + (len(steps) - 1) * gw
+sx = (17 - total) / 2
+yb = 2.7
+bh = 3.0
 
-for i, step in enumerate(steps):
-    x = start_x + i * (box_w + gap)
+for i, (num, title, desc, last) in enumerate(steps):
+    x  = sx + i * (sw + gw)
+    fc = BLUE    if last else BLUE_LT
+    ec = BLUE    if last else BLUE_MD
+    tc = WHITE   if last else DARK
+    nc = WHITE   if last else NUM_C
+    dc = '#bfdbfe' if last else MUTED
+    lw = 0       if last else 1.2
 
-    # 박스
-    rect = mpatches.FancyBboxPatch(
-        (x, y_top - box_h), box_w, box_h,
-        boxstyle="round,pad=0.1",
-        facecolor=step['color'], edgecolor='white', linewidth=2,
-        zorder=3
-    )
-    ax.add_patch(rect)
+    rbox(ax, x, yb, sw, bh, fc=fc, ec=ec, lw=lw)
 
-    # 아이콘
-    ax.text(x + box_w/2, y_top - 0.45, step['icon'],
-            ha='center', va='center', fontsize=22, zorder=4)
+    txt(ax, num,   x+sw/2, yb+bh-0.38, size=10, bold=True,  color=nc)
+    txt(ax, title, x+sw/2, yb+bh-1.0,  size=13, bold=True,  color=tc)
+    txt(ax, desc,  x+sw/2, yb+bh-2.15, size=9.5,            color=dc)
 
-    # 제목
-    ax.text(x + box_w/2, y_top - 1.35, step['title'],
-            ha='center', va='center', fontsize=10.5, fontweight='bold',
-            color=WHITE, zorder=4, linespacing=1.4)
-
-    # 설명
-    ax.text(x + box_w/2, y_top - 2.15, step['desc'],
-            ha='center', va='center', fontsize=8.5,
-            color='#c4b5fd' if step['color'] != GREEN else '#6ee7b7',
-            zorder=4)
-
-    # 수치 (박스 아래)
-    stat_bg = mpatches.FancyBboxPatch(
-        (x + 0.1, y_top - box_h - 0.7), box_w - 0.2, 0.55,
-        boxstyle="round,pad=0.05",
-        facecolor=GRAY, edgecolor=step['color'], linewidth=1.5, zorder=3
-    )
-    ax.add_patch(stat_bg)
-    ax.text(x + box_w/2, y_top - box_h - 0.42, step['stat'],
-            ha='center', va='center', fontsize=9, fontweight='bold',
-            color=step['color'], zorder=4)
-
-    # 화살표
     if i < len(steps) - 1:
-        arrow_x = x + box_w + 0.05
-        arrow_y = y_top - box_h/2
-        ax.annotate('',
-            xy=(arrow_x + gap - 0.1, arrow_y),
-            xytext=(arrow_x, arrow_y),
-            arrowprops=dict(arrowstyle='->', color=MUTED,
-                           lw=2.5, mutation_scale=20),
-            zorder=5
-        )
+        ax.text(x+sw+gw/2, yb+bh/2, '>',
+                ha='center', va='center', fontsize=18,
+                color=BLUE_MD, fontweight='bold', zorder=4)
 
-# 하단 박스: KDC 대신 AI 이유
-reason_y = 1.8
-rect2 = mpatches.FancyBboxPatch(
-    (0.3, 0.15), 15.4, reason_y,
-    boxstyle="round,pad=0.1",
-    facecolor=GRAY, edgecolor='#e2e8f0', linewidth=1.5, zorder=2
-)
-ax.add_patch(rect2)
+# ── KDC 대신 AI 이유 ──────────────────────────────────────────────────────────
+rbox(ax, 0.55, 0.2, 15.9, 2.15, fc=GRAY_BG, ec=GRAY_BD, lw=1, r=0.05)
 
-ax.text(8, 1.75, 'KDC 세부코드 대신 AI를 사용한 이유',
-        ha='center', va='center', fontsize=11, fontweight='bold',
-        color=DARK, zorder=3)
+txt(ax, 'KDC 세부코드 대신 AI를 사용한 이유',
+    8.5, 2.1, size=11, bold=True, color=DARK)
 
 reasons = [
-    ('X', 'KDC API', '사용한 사서 추천 도서 API에서 KDC 세부코드 미제공'),
-    ('X', '규칙 기반', '문맥 이해 불가 — 학생 친화 태그·진로 연결 생성 불가'),
-    ('O', 'Gemini AI', '내용 이해 기반 → 진로 연결 + 학생 친화 태그 + themes 동시 생성'),
+    (RED_C,   'X   KDC API',   '활용한 사서 추천 도서 API에서 KDC 세부코드 미제공'),
+    (RED_C,   'X   규칙 기반', '문맥 이해 불가 — 학생 친화 태그·진로 연결 생성 불가'),
+    (GREEN_C, 'O   Gemini AI', '내용 이해 기반 → 진로 연결 + 학생 친화 태그 + Themes 동시 생성'),
 ]
+for j, (col, label, desc) in enumerate(reasons):
+    yr = 1.65 - j * 0.52
+    txt(ax, label, 2.1, yr, size=10, bold=True, color=col, ha='left')
+    txt(ax, desc,  5.6, yr, size=10,             color=DARK, ha='left')
 
-cols_x = [1.2, 1.8, 3.0]
-for j, (icon, label, desc) in enumerate(reasons):
-    y_r = 1.22 - j * 0.38
-    color = '#ef4444' if icon == '❌' else '#10b981'
-    ax.text(cols_x[0], y_r, icon, ha='center', va='center',
-            fontsize=11, zorder=3)
-    ax.text(cols_x[1], y_r, label, ha='left', va='center',
-            fontsize=9.5, fontweight='bold', color=color, zorder=3)
-    ax.text(cols_x[2], y_r, desc, ha='left', va='center',
-            fontsize=9, color=DARK, zorder=3)
-
-plt.tight_layout(pad=0.2)
+plt.tight_layout(pad=0.05)
 out = 'analysis/graphs/data_flow_chart.png'
 plt.savefig(out, dpi=180, bbox_inches='tight',
-            facecolor='white', edgecolor='none')
+            facecolor=WHITE, edgecolor='none')
 plt.close()
 print(f'저장 완료: {out}')
