@@ -37,6 +37,11 @@ temp/
 *.log
 *.progress
 
+# 개인정보 포함 파일 (push 금지)
+수행평가*.docx
+make_report.py
+pdf_preview/
+
 # 대용량·불필요 파일
 *.pdf
 *.xlsx
