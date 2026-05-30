@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookPath — 책으로 찾는 나의 진로</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 16px;
+            --shadow: 0 2px 16px rgba(0,0,0,0.07);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+        }
+        .logo { font-size: 1.4rem; font-weight: 800; color: #4f46e5; cursor: pointer; }
+        .logo span { font-weight: 400; font-size: 0.9rem; color: var(--muted); margin-left: 0.5rem; }
+
+        /* ── Breadcrumb ── */
+        #breadcrumb {
+            padding: 0.85rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+        }
+        .bc-link { color: #4f46e5; cursor: pointer; }
+        .bc-link:hover { text-decoration: underline; }
+        .bc-sep { color: var(--muted); }
+        .bc-cur { font-weight: 600; color: var(--text); }
+
+        /* ── Main ── */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem 4rem;
+        }
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ── Back Button ── */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 1rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            transition: background 0.15s;
+        }
+        .back-btn:hover { background: #f1f5f9; }
+
+        /* ── KDC Category Grid ── */
+        .cat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+            gap: 1rem;
+        }
+        .cat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.4rem 1.2rem;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border-top: 4px solid var(--c);
+            transition: transform 0.18s, box-shadow 0.18s;
+        }
+        .cat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.11);
+        }
+        .cat-emoji { font-size: 2.2rem; display: block; margin-bottom: 0.6rem; }
+        .cat-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .cat-code { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.4rem; }
+        .cat-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+        .cat-badge {
+            display: inline-block;
+            margin-top: 0.7rem;
+            padding: 0.2rem 0.65rem;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: var(--cl);
+            color: var(--c);
+        }
+
+        /* ── Career Chips ── */
+        .career-wrap {
+            margin-bottom: 1.4rem;
+        }
+        .career-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 0.6rem;
+        }
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+        .chip {
+            padding: 0.38rem 0.9rem;
+            border-radius: 20px;
+            border: 2px solid var(--border);
+            background: white;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .chip:hover { border-color: #4f46e5; color: #4f46e5; }
+        .chip.on { background: #4f46e5; border-color: #4f46e5; color: white; }
+
+        /* ── Book Grid ── */
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+        .book-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.1rem;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .book-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+        .book-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.45;
+            margin-bottom: 0.25rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .book-author { font-size: 0.77rem; color: var(--muted); margin-bottom: 0.7rem; }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .tag {
+            padding: 0.12rem 0.48rem;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+        .tag.career { background: #ede9fe; color: #5b21b6; }
+        .tag.student { background: #dbeafe; color: #1d4ed8; }
+
+        /* ── Career Info Panel ── */
+        .career-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .career-info-card {
+            background: linear-gradient(135deg, #f8f7ff 0%, #fff 100%);
+            border: 1.5px solid #c4b5fd;
+            border-radius: 14px;
+            padding: 1.1rem 1.25rem;
+            min-width: 0;
+        }
+        .ci-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .ci-emoji { font-size: 1.5rem; }
+        .ci-name { font-size: 1rem; font-weight: 800; color: #4f46e5; }
+        .ci-desc { font-size: 0.83rem; line-height: 1.65; color: var(--text); }
+        .ci-cta {
+            margin-top: 0.6rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #7c3aed;
+        }
+
+        /* ── Empty / Loading ── */
+        .empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--muted);
+        }
+        .empty-icon { font-size: 2.8rem; margin-bottom: 0.8rem; }
+
+        /* ── Modal ── */
+        #overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        #overlay.open { display: flex; }
+        .modal {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 580px;
+            width: 92%;
+            max-height: 82vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-x {
+            position: absolute;
+            top: 1rem; right: 1.2rem;
+            background: none; border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: var(--muted);
+            line-height: 1;
+        }
+        .modal-x:hover { color: var(--text); }
+        .modal-title { font-size: 1.1rem; font-weight: 800; line-height: 1.45; padding-right: 2rem; margin-bottom: 0.3rem; }
+        .modal-author { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; }
+        .modal-sec { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 1.1rem 0 0.5rem; }
+        .modal-desc { font-size: 0.875rem; line-height: 1.75; color: var(--text); }
+
+        @media (max-width: 600px) {
+            main { padding: 0.75rem 1rem 3rem; }
+            .cat-grid { grid-template-columns: repeat(2, 1fr); }
+            .book-grid { grid-template-columns: 1fr; }
+            header { padding: 0 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo" onclick="goHome()">📚 BookPath<span>책으로 찾는 나의 진로</span></div>
+</header>
+
+<nav id="breadcrumb"></nav>
+
+<main id="main">
+    <div class="empty"><div class="empty-icon">⏳</div><p>데이터 로딩 중...</p></div>
+</main>
+
+<div id="overlay" onclick="onOverlayClick(event)">
+    <div class="modal">
+        <button class="modal-x" onclick="closeModal()">×</button>
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+<script>
+// ── 색상표 ────────────────────────────────────────────────────────────────────
+const COLORS = {
+    '0': { c: '#6366f1', cl: '#ede9fe' },
+    '1': { c: '#8b5cf6', cl: '#f3e8ff' },
+    '2': { c: '#ec4899', cl: '#fce7f3' },
+    '3': { c: '#f97316', cl: '#fff7ed' },
+    '4': { c: '#10b981', cl: '#d1fae5' },
+    '5': { c: '#3b82f6', cl: '#dbeafe' },
+    '6': { c: '#f59e0b', cl: '#fef3c7' },
+    '7': { c: '#14b8a6', cl: '#ccfbf1' },
+    '8': { c: '#ef4444', cl: '#fee2e2' },
+    '9': { c: '#84cc16', cl: '#ecfccb' },
+};
+const col = code => COLORS[String(code)[0]] || { c: '#6b7280', cl: '#f3f4f6' };
+
+// ── 전역 상태 ──────────────────────────────────────────────────────────────────
+let tree = null, books = [], careerInfo = {};
+let curCat = null, curSub = null, curCareers = [];
+
+// ── 데이터 로딩 ────────────────────────────────────────────────────────────────
+async function init() {
+    try {
+        const [t, b, ci] = await Promise.all([
+            fetch('data/kdc_tree.json').then(r => r.json()),
+            fetch('data/books_tagged.json').then(r => r.json()),
+            fetch('data/career_info.json').then(r => r.json()),
+        ]);
+        tree = t; books = b; careerInfo = ci;
+        goHome();
+    } catch {
+        document.getElementById('main').innerHTML =
+            '<div class="empty"><div class="empty-icon">⚠️</div><p>데이터 로딩 실패<br><small>로컬 서버(Live Server 등)로 실행해주세요.</small></p></div>';
+    }
+}
+
+// ── 내비게이션 ─────────────────────────────────────────────────────────────────
+function goHome() {
+    curCat = curSub = curCareer = null;
+    renderBreadcrumb();
+    renderL1();
+}
+
+function pickCat(id) {
+    curCat = tree.children.find(c => c.id === id);
+    curSub = null; curCareers = [];
+    renderBreadcrumb();
+    renderL2();
+}
+
+function pickSub(id) {
+    curSub = curCat.children.find(s => s.id === id);
+    curCareers = [];
+    renderBreadcrumb();
+    renderL3();
+}
+
+function toggleCareer(name) {
+    const idx = curCareers.indexOf(name);
+    if (idx === -1) curCareers.push(name);
+    else curCareers.splice(idx, 1);
+    renderBooks();
+}
+
+// ── 브레드크럼 ─────────────────────────────────────────────────────────────────
+function renderBreadcrumb() {
+    let h = `<span class="bc-link" onclick="goHome()">전체 분야</span>`;
+    if (curCat) {
+        h += `<span class="bc-sep">›</span>`;
+        h += curSub
+            ? `<span class="bc-link" onclick="pickCat('${curCat.id}')">${curCat.name}</span>`
+            : `<span class="bc-cur">${curCat.name}</span>`;
+    }
+    if (curSub) {
+        h += `<span class="bc-sep">›</span><span class="bc-cur">${curSub.name}</span>`;
+    }
+    document.getElementById('breadcrumb').innerHTML = h;
+}
+
+// ── Level 1: 대분류 카드 ──────────────────────────────────────────────────────
+function renderL1() {
+    const cards = tree.children.map(cat => {
+        const { c, cl } = col(cat.code);
+        const cnt = books.filter(b => b.kdc && b.kdc[0] === cat.code[0]).length;
+        return `<div class="cat-card" style="--c:${c};--cl:${cl}" onclick="pickCat('${cat.id}')">
+            <span class="cat-emoji">${cat.emoji || '📁'}</span>
+            <div class="cat-name">${cat.name}</div>
+            <div class="cat-code">${cat.code}</div>
+            <div class="cat-desc">${cat.description || ''}</div>
+            <span class="cat-badge">${cnt}권</span>
+        </div>`;
+    }).join('');
+    document.getElementById('main').innerHTML =
+        `<div class="section-title">📚 분야를 선택하세요</div><div class="cat-grid">${cards}</div>`;
+}
+
+// ── Level 2: 세부분류 카드 ────────────────────────────────────────────────────
+function renderL2() {
+    const { c, cl } = col(curCat.code);
+    const cards = (curCat.children || []).map(sub => {
+        const cnt = booksForSub(sub).length;
+        return `<div class="cat-card" style="--c:${c};--cl:${cl}" onclick="pickSub('${sub.id}')">
+            <div class="cat-name">${sub.name}</div>
+            <div class="cat-code">${sub.code}</div>
+            <span class="cat-badge">${cnt}권</span>
+        </div>`;
+    }).join('');
+    document.getElementById('main').innerHTML =
+        `<button class="back-btn" onclick="goHome()">← 전체 분야</button>
+         <div class="section-title">${curCat.emoji || ''} ${curCat.name} — 세부 분야</div>
+         <div class="cat-grid">${cards}</div>`;
+}
+
+// ── Level 3: 진로 필터 + 도서 목록 ────────────────────────────────────────────
+function renderL3() {
+    const filtered = booksForSub(curSub);
+    const careerCounts = {};
+    filtered.forEach(b => (b.career_tags || []).forEach(c => {
+        careerCounts[c] = (careerCounts[c] || 0) + 1;
+    }));
+    const careers = Object.entries(careerCounts).sort((a, b) => b[1] - a[1]).map(([c]) => c);
+
+    const chips = careers.length
+        ? `<div class="career-wrap">
+               <div class="career-label">🎯 진로로 필터 <span style="font-weight:400">(중복 선택 가능)</span></div>
+               <div class="chip-row">${careers.map(c =>
+                   `<span class="chip" data-c="${esc(c)}" onclick="toggleCareer('${esc(c)}')">${esc(c)}</span>`
+               ).join('')}</div>
+           </div>`
+        : '';
+
+    document.getElementById('main').innerHTML =
+        `<button class="back-btn" onclick="pickCat('${curCat.id}')">← ${curCat.name}</button>
+         <div class="section-title">${curSub.name} <span style="font-weight:400;font-size:0.9rem;color:var(--muted)">(${filtered.length}권)</span></div>
+         ${chips}
+         <div id="career-panel" style="display:none"></div>
+         <div id="book-list"></div>`;
+    renderBooks();
+}
+
+function renderBooks() {
+    const filtered = booksForSub(curSub);
+    const shown = curCareers.length
+        ? filtered.filter(b => (b.career_tags || []).some(t => curCareers.includes(t)))
+        : filtered;
+
+    document.querySelectorAll('.chip').forEach(el => {
+        el.classList.toggle('on', curCareers.includes(el.dataset.c));
+    });
+
+    // 진로 설명 패널
+    const panelEl = document.getElementById('career-panel');
+    if (curCareers.length > 0) {
+        const cards = curCareers.map(name => {
+            const info = careerInfo[name] || {
+                emoji: '💼',
+                desc: '이 진로에 관련된 책들을 아래에서 만나보세요. 다양한 책을 통해 직접 탐색해보세요!'
+            };
+            return `<div class="career-info-card">
+                <div class="ci-header">
+                    <span class="ci-emoji">${info.emoji}</span>
+                    <span class="ci-name">${esc(name)}</span>
+                </div>
+                <div class="ci-desc">${esc(info.desc)}</div>
+                <div class="ci-cta">📖 아래 책들로 이 진로를 탐색해보세요!</div>
+            </div>`;
+        }).join('');
+        panelEl.innerHTML = `<div class="career-panel">${cards}</div>`;
+        panelEl.style.display = 'block';
+    } else {
+        panelEl.innerHTML = '';
+        panelEl.style.display = 'none';
+    }
+
+    if (!shown.length) {
+        document.getElementById('book-list').innerHTML =
+            '<div class="empty"><div class="empty-icon">📭</div><p>해당 도서가 없습니다.</p></div>';
+        return;
+    }
+
+    const cards = shown.map((b, i) => `
+        <div class="book-card" onclick="openBook(${i})">
+            <div class="book-title">${esc(b.title)}</div>
+            <div class="book-author">${esc(cleanAuthor(b.author))}</div>
+            <div class="tag-row">
+                ${(b.career_tags || []).map(t => `<span class="tag career">${esc(t)}</span>`).join('')}
+                ${(b.student_tags || []).slice(0, 2).map(t => `<span class="tag student">${esc(t)}</span>`).join('')}
+            </div>
+        </div>`).join('');
+    document.getElementById('book-list').innerHTML = `<div class="book-grid">${cards}</div>`;
+    window._shownBooks = shown;
+}
+
+// ── 도서 필터링 헬퍼 ──────────────────────────────────────────────────────────
+function booksForSub(sub) {
+    return books.filter(b => {
+        if (!b.kdc) return false;
+        if (b.kdc === sub.code) return true;
+        if (b.kdc === curCat.code) return true;
+        if (b.kdc.length >= 2 && sub.code.length >= 2 && b.kdc.substring(0, 2) === sub.code.substring(0, 2)) return true;
+        return false;
+    });
+}
+
+// ── 유틸 ─────────────────────────────────────────────────────────────────────
+function cleanAuthor(a) {
+    return (a || '저자 미상').replace(/\/\//g, '').trim();
+}
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── 모달 ─────────────────────────────────────────────────────────────────────
+function openBook(i) {
+    const b = window._shownBooks[i];
+    if (!b) return;
+    document.getElementById('modal-body').innerHTML = `
+        <div class="modal-title">${esc(b.title)}</div>
+        <div class="modal-author">${esc(cleanAuthor(b.author))}</div>
+        ${b.description
+            ? `<div class="modal-sec">책 소개</div>
+               <div class="modal-desc">${esc(b.description).replace(/\n/g,'<br>')}</div>`
+            : ''}
+        ${(b.career_tags||[]).length
+            ? `<div class="modal-sec">🎯 관련 진로</div>
+               <div class="tag-row">${b.career_tags.map(t=>`<span class="tag career">${esc(t)}</span>`).join('')}</div>`
+            : ''}
+        ${(b.student_tags||[]).length
+            ? `<div class="modal-sec">🔖 키워드</div>
+               <div class="tag-row">${b.student_tags.map(t=>`<span class="tag student">${esc(t)}</span>`).join('')}</div>`
+            : ''}
+    `;
+    document.getElementById('overlay').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+}
+
+function onOverlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+init();
+</script>
+</body>
+</html>
