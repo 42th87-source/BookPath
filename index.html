@@ -668,7 +668,7 @@ function renderL3() {
            </div>`
         : '';
 
-    const kdcKey = curSub.code[0];
+    const kdcKey = curCat.code; // "800", "400" 등 100단위 코드
     document.getElementById('main').innerHTML =
         `<button class="back-btn" onclick="pickCat('${curCat.id}')">← ${curCat.name}</button>
          <div class="section-title">${curSub.name} <span style="font-weight:400;font-size:0.9rem;color:var(--muted)">(${filtered.length}권)</span></div>
@@ -815,7 +815,7 @@ function findSideShelfBooks(currentBook, connection, count = 2) {
 }
 
 function renderSideShelfModal(book) {
-    const kdcKey = (book.kdc || '0')[0];
+    const kdcKey = (book.kdc || '000')[0] + '00'; // "840" → "800"
     const connections = (sideShelfMap.connections || {})[kdcKey] || [];
     if (!connections.length) return '';
 
