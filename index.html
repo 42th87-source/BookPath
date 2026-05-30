@@ -298,6 +298,77 @@
             color: #7c3aed;
         }
 
+        /* ── Tabs ── */
+        .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0;
+        }
+        .tab-btn {
+            padding: 0.55rem 1.25rem;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.15s, border-color 0.15s;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab-btn:hover { color: #4f46e5; }
+        .tab-btn.on { color: #4f46e5; border-bottom-color: #4f46e5; }
+
+        /* ── Career Home ── */
+        .career-group { margin-bottom: 1.75rem; }
+        .career-group-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.75rem;
+        }
+        .career-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.6rem;
+        }
+        .career-card {
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 0.9rem;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+        }
+        .career-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.09);
+            border-color: #a5b4fc;
+        }
+        .career-card-header { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem; }
+        .career-card-emoji { font-size: 1.1rem; }
+        .career-card-name { font-size: 0.85rem; font-weight: 700; line-height: 1.3; }
+        .career-card-count { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── Career Detail ── */
+        .career-detail-card {
+            background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+            border: 1.5px solid #c4b5fd;
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .cd-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+        .cd-emoji { font-size: 1.8rem; }
+        .cd-name { font-size: 1.2rem; font-weight: 800; color: #4f46e5; }
+        .cd-desc { font-size: 0.875rem; line-height: 1.7; color: var(--text); margin-bottom: 0.6rem; }
+        .cd-cta { font-size: 0.8rem; font-weight: 600; color: #7c3aed; }
+
         /* ── Empty / Loading ── */
         .empty {
             text-align: center;
@@ -413,6 +484,27 @@ const col = code => COLORS[String(code)[0]] || { c: '#6b7280', cl: '#f3f4f6' };
 // ── 전역 상태 ──────────────────────────────────────────────────────────────────
 let tree = null, books = [], careerInfo = {};
 let curCat = null, curSub = null, curCareers = [];
+let curMode = 'kdc';        // 'kdc' | 'career'
+let curCareerSelected = null;
+
+const CAREER_GROUPS = {
+    '🧑‍💼 인문·사회': ['철학자','윤리학자','심리상담사','임상심리사','뇌과학자','사회학자','사회복지사',
+        '경제학자','금융전문가','경영컨설턴트','마케터','창업가','회계사',
+        '변호사','판사','검사','기자·언론인','정치인','외교관','공무원',
+        '교사','교육학자','진로상담사','종교학자','신학자','문화인류학자',
+        '역사학자','고고학자','박물관큐레이터','지리학자','여행작가','문화기획자'],
+    '🔬 이공계': ['수학자','통계학자','데이터과학자','데이터분析가','물리학자','반도체공학자',
+        '화학자','화학공학자','소재공학자','생물학자','생명공학자','유전공학자',
+        '천문학자','지구과학자','기상학자','환경과학자','해양학자','지질학자',
+        '의사','간호사','약사','의학연구원','수의사','영양사',
+        '기계공학자','환경공학자','건축가','도시계획가','전기공학자','전자공학자',
+        '로봇공학자','항공우주공학자','AI연구원','소프트웨어개발자','정보보안전문가'],
+    '🎨 예술·언어': ['소설가','시인','번역가','통역사','언어학자','국어교사','영어교사','출판편집자',
+        '방송작가','시나리오작가','만화가·웹툰작가',
+        '음악가','작곡가','지휘자','음악치료사','화가','조각가','큐레이터','미술치료사','배우',
+        '그래픽디자이너','UX디자이너','패션디자이너','인테리어디자이너',
+        '사진작가','영상감독','영화감독','방송PD','스포츠선수','스포츠지도자','사서'],
+};
 
 // ── 데이터 로딩 ────────────────────────────────────────────────────────────────
 async function init() {
@@ -432,7 +524,8 @@ async function init() {
 
 // ── 내비게이션 ─────────────────────────────────────────────────────────────────
 function goHome() {
-    curCat = curSub = curCareer = null;
+    curCat = curSub = null; curCareers = [];
+    curCareerSelected = null;
     renderBreadcrumb();
     renderL1();
 }
@@ -460,21 +553,44 @@ function toggleCareer(name) {
 
 // ── 브레드크럼 ─────────────────────────────────────────────────────────────────
 function renderBreadcrumb() {
-    let h = `<span class="bc-link" onclick="goHome()">전체 분야</span>`;
-    if (curCat) {
-        h += `<span class="bc-sep">›</span>`;
-        h += curSub
-            ? `<span class="bc-link" onclick="pickCat('${curCat.id}')">${curCat.name}</span>`
-            : `<span class="bc-cur">${curCat.name}</span>`;
-    }
-    if (curSub) {
-        h += `<span class="bc-sep">›</span><span class="bc-cur">${curSub.name}</span>`;
+    let h = `<span class="bc-link" onclick="goHome()">${curMode==='career'?'진로 탐색':'전체 분야'}</span>`;
+    if (curMode === 'career') {
+        if (curCareerSelected) {
+            h += `<span class="bc-sep">›</span><span class="bc-cur">${esc(curCareerSelected)}</span>`;
+        }
+    } else {
+        if (curCat) {
+            h += `<span class="bc-sep">›</span>`;
+            h += curSub
+                ? `<span class="bc-link" onclick="pickCat('${curCat.id}')">${curCat.name}</span>`
+                : `<span class="bc-cur">${curCat.name}</span>`;
+        }
+        if (curSub) {
+            h += `<span class="bc-sep">›</span><span class="bc-cur">${curSub.name}</span>`;
+        }
     }
     document.getElementById('breadcrumb').innerHTML = h;
 }
 
 // ── Level 1: 대분류 카드 ──────────────────────────────────────────────────────
+// ── 탭 전환 ──────────────────────────────────────────────────────────────────
+function switchMode(mode) {
+    curMode = mode;
+    curCat = curSub = null; curCareers = [];
+    curCareerSelected = null;
+    renderBreadcrumb();
+    renderL1();
+}
+
+function tabBar() {
+    return `<div class="tab-bar">
+        <button class="tab-btn ${curMode==='kdc'?'on':''}" onclick="switchMode('kdc')">📚 분야로 탐색</button>
+        <button class="tab-btn ${curMode==='career'?'on':''}" onclick="switchMode('career')">🎯 진로로 탐색</button>
+    </div>`;
+}
+
 function renderL1() {
+    if (curMode === 'career') { renderCareerHome(); return; }
     const cards = tree.children.map(cat => {
         const { c, cl } = col(cat.code);
         const cnt = books.filter(b => b.kdc && b.kdc[0] === cat.code[0]).length;
@@ -487,7 +603,65 @@ function renderL1() {
         </div>`;
     }).join('');
     document.getElementById('main').innerHTML =
-        `<div class="section-title">📚 분야를 선택하세요</div><div class="cat-grid">${cards}</div>`;
+        `${tabBar()}<div class="section-title">분야를 선택하세요</div><div class="cat-grid">${cards}</div>`;
+}
+
+function renderCareerHome() {
+    const groups = Object.entries(CAREER_GROUPS).map(([groupName, careers]) => {
+        const cards = careers.map(name => {
+            const info = careerInfo[name] || { emoji: '💼' };
+            const cnt = books.filter(b => (b.career_tags || []).includes(name)).length;
+            return `<div class="career-card" onclick="pickCareer('${esc(name)}')">
+                <div class="career-card-header">
+                    <span class="career-card-emoji">${info.emoji}</span>
+                    <span class="career-card-name">${esc(name)}</span>
+                </div>
+                <div class="career-card-count">${cnt}권</div>
+            </div>`;
+        }).join('');
+        return `<div class="career-group">
+            <div class="career-group-title">${groupName}</div>
+            <div class="career-card-grid">${cards}</div>
+        </div>`;
+    }).join('');
+    document.getElementById('main').innerHTML =
+        `${tabBar()}<div class="section-title">관심 진로를 선택하세요</div>${groups}`;
+}
+
+function pickCareer(name) {
+    curCareerSelected = name;
+    renderBreadcrumb();
+    renderBooksByCareer(name);
+}
+
+function renderBooksByCareer(name) {
+    const info = careerInfo[name] || { emoji: '💼', desc: '이 진로와 관련된 책들을 탐색해보세요.' };
+    const matched = books.filter(b => (b.career_tags || []).includes(name));
+    window._shownBooks = matched;
+
+    document.getElementById('main').innerHTML = `
+        <button class="back-btn" onclick="switchMode('career')">← 진로 목록</button>
+        <div class="career-detail-card">
+            <div class="cd-header">
+                <span class="cd-emoji">${info.emoji}</span>
+                <span class="cd-name">${esc(name)}</span>
+            </div>
+            <div class="cd-desc">${esc(info.desc)}</div>
+            <div class="cd-cta">📖 아래 ${matched.length}권의 책으로 이 진로를 탐색해보세요!</div>
+        </div>
+        ${matched.length
+            ? `<div class="book-grid">${matched.map((b, i) => `
+                <div class="book-card" onclick="openBook(${i})">
+                    <div class="book-title">${esc(b.title)}</div>
+                    <div class="book-author">${esc(cleanAuthor(b.author))}</div>
+                    <div class="tag-row">
+                        ${(b.career_tags||[]).map(t=>`<span class="tag career">${esc(t)}</span>`).join('')}
+                        ${(b.student_tags||[]).slice(0,2).map(t=>`<span class="tag student">${esc(t)}</span>`).join('')}
+                    </div>
+                </div>`).join('')}</div>`
+            : `<div class="empty"><div class="empty-icon">📭</div>
+               <p>아직 관련 도서가 없습니다.<br>Gemini 태깅 완료 후 채워집니다.</p></div>`
+        }`;
 }
 
 // ── Level 2: 세부분류 카드 ────────────────────────────────────────────────────
