@@ -4,243 +4,167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>내 서재 — BookPath</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --muted: #64748b;
-            --border: #e2e8f0;
-            --primary: #4f46e5;
-            --radius: 16px;
-            --shadow: 0 2px 16px rgba(0,0,0,0.07);
+            --bg: #f8fafc; --card: #fff; --text: #1e293b;
+            --muted: #64748b; --border: #e2e8f0; --primary: #4f46e5;
+            --radius: 16px; --shadow: 0 2px 16px rgba(0,0,0,0.07);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-        /* ── Header ── */
         header {
-            background: white;
-            border-bottom: 1px solid var(--border);
-            padding: 0 2rem;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background: white; border-bottom: 1px solid var(--border);
+            padding: 0 2rem; height: 60px; display: flex;
+            align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
             box-shadow: 0 1px 8px rgba(0,0,0,0.06);
         }
         .logo { font-size: 1.4rem; font-weight: 800; color: var(--primary); text-decoration: none; }
         .logo span { font-weight: 400; font-size: 0.9rem; color: var(--muted); margin-left: 0.5rem; }
         .explore-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.45rem 1.1rem;
-            background: var(--primary);
-            color: white;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: background 0.15s;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.45rem 1.1rem; background: var(--primary); color: white;
+            border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+            text-decoration: none; transition: background 0.15s;
         }
         .explore-btn:hover { background: #4338ca; }
 
-        /* ── Main ── */
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem 2rem 4rem;
-        }
+        main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
 
-        /* ── Stats Bar ── */
+        /* Stats */
         .stats-bar {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            background: white;
-            border-radius: var(--radius);
-            padding: 1.1rem 1.5rem;
-            margin-bottom: 1.5rem;
-            box-shadow: var(--shadow);
-            flex-wrap: wrap;
+            display: flex; align-items: center; gap: 1.5rem;
+            background: white; border-radius: var(--radius);
+            padding: 1.1rem 1.5rem; margin-bottom: 1.5rem;
+            box-shadow: var(--shadow); flex-wrap: wrap;
         }
-        .stat {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .stat-num { font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+        .stat { display: flex; align-items: center; gap: 0.5rem; }
+        .stat-num { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 0.82rem; color: var(--muted); }
-        .stat-divider { width: 1px; height: 32px; background: var(--border); }
+        .stat-div { width: 1px; height: 32px; background: var(--border); }
 
-        /* ── Filter ── */
-        .filter-wrap {
-            margin-bottom: 1.25rem;
+        /* Section title */
+        .sec-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 1rem; }
+
+        /* Analysis section */
+        .analysis-section { margin-bottom: 2rem; }
+
+        /* Charts row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
-        .filter-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--muted);
-            margin-bottom: 0.6rem;
+        .chart-card {
+            background: white; border-radius: var(--radius);
+            padding: 1.25rem; box-shadow: var(--shadow);
         }
-        .chip-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.45rem;
+        .chart-title { font-size: 0.85rem; font-weight: 700; color: var(--muted); margin-bottom: 1rem; text-align: center; }
+        .chart-wrap { position: relative; height: 220px; }
+
+        /* Top3 grid */
+        .top3-section { margin-bottom: 1.5rem; }
+        .top3-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
         }
+        .top3-card {
+            background: white; border-radius: 12px;
+            padding: 1.1rem; box-shadow: var(--shadow);
+            border-top: 4px solid var(--c, var(--primary));
+        }
+        .top3-rank { font-size: 0.7rem; font-weight: 700; color: var(--muted); margin-bottom: 0.3rem; }
+        .top3-header { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.5rem; }
+        .top3-emoji { font-size: 1.4rem; }
+        .top3-name { font-size: 0.95rem; font-weight: 800; }
+        .top3-count {
+            display: inline-block; padding: 0.15rem 0.5rem;
+            background: #ede9fe; color: #5b21b6;
+            border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .top3-desc { font-size: 0.78rem; line-height: 1.6; color: var(--muted); }
+
+        /* Filter */
+        .filter-wrap { margin-bottom: 1.25rem; }
+        .filter-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 0.6rem; }
+        .chip-row { display: flex; flex-wrap: wrap; gap: 0.45rem; }
         .chip {
-            padding: 0.38rem 0.9rem;
-            border-radius: 20px;
-            border: 2px solid var(--border);
-            background: white;
-            cursor: pointer;
-            font-size: 0.82rem;
-            font-weight: 500;
+            padding: 0.38rem 0.9rem; border-radius: 20px;
+            border: 2px solid var(--border); background: white;
+            cursor: pointer; font-size: 0.82rem; font-weight: 500;
             transition: all 0.15s;
         }
         .chip:hover { border-color: var(--primary); color: var(--primary); }
         .chip.on { background: var(--primary); border-color: var(--primary); color: white; }
-        .chip.all { border-color: var(--primary); color: var(--primary); }
-        .chip.all.on { background: var(--primary); color: white; }
 
-        /* ── Sort ── */
-        .toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
+        /* Toolbar */
+        .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
         .result-count { font-size: 0.85rem; color: var(--muted); }
-        .sort-select {
-            padding: 0.35rem 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.82rem;
-            background: white;
-            cursor: pointer;
-            color: var(--text);
-        }
 
-        /* ── Book Grid ── */
-        .book-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1rem;
-        }
+        /* Book grid */
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
         .book-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.1rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            position: relative;
-            transition: transform 0.15s, box-shadow 0.15s;
+            background: white; border-radius: 12px; padding: 1.1rem;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            position: relative; transition: transform 0.15s, box-shadow 0.15s;
         }
         .book-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
         .book-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            line-height: 1.45;
-            margin-bottom: 0.25rem;
-            padding-right: 1.8rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            cursor: pointer;
+            font-size: 0.9rem; font-weight: 700; line-height: 1.45;
+            margin-bottom: 0.25rem; padding-right: 1.8rem;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; cursor: pointer;
         }
         .book-title:hover { color: var(--primary); }
         .book-author { font-size: 0.77rem; color: var(--muted); margin-bottom: 0.7rem; }
-        .tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.7rem; }
-        .tag {
-            padding: 0.12rem 0.48rem;
-            border-radius: 4px;
-            font-size: 0.68rem;
-            font-weight: 600;
-        }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.5rem; }
+        .tag { padding: 0.12rem 0.48rem; border-radius: 4px; font-size: 0.68rem; font-weight: 600; }
         .tag.career { background: #ede9fe; color: #5b21b6; }
         .tag.student { background: #dbeafe; color: #1d4ed8; }
         .book-date { font-size: 0.7rem; color: #94a3b8; }
-
-        /* ── Remove Button ── */
         .remove-btn {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: none;
-            background: #fee2e2;
-            color: #ef4444;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s;
-            line-height: 1;
+            position: absolute; top: 0.75rem; right: 0.75rem;
+            width: 26px; height: 26px; border-radius: 50%;
+            border: none; background: #fee2e2; color: #ef4444;
+            font-size: 0.9rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s; line-height: 1;
         }
         .remove-btn:hover { background: #fecaca; }
 
-        /* ── Empty State ── */
-        .empty {
-            text-align: center;
-            padding: 5rem 2rem;
-            color: var(--muted);
-        }
+        /* Empty */
+        .empty { text-align: center; padding: 5rem 2rem; color: var(--muted); }
         .empty-icon { font-size: 3.5rem; margin-bottom: 1rem; }
         .empty h2 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text); }
         .empty p { font-size: 0.9rem; margin-bottom: 1.5rem; }
         .empty-link {
-            display: inline-block;
-            padding: 0.6rem 1.5rem;
-            background: var(--primary);
-            color: white;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            font-size: 0.9rem;
+            display: inline-block; padding: 0.6rem 1.5rem;
+            background: var(--primary); color: white;
+            border-radius: 8px; font-weight: 600;
+            text-decoration: none; font-size: 0.9rem;
         }
 
-        /* ── Modal ── */
+        /* Modal */
         #overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 200;
+            align-items: center; justify-content: center;
         }
         #overlay.open { display: flex; }
         .modal {
-            background: white;
-            border-radius: var(--radius);
-            padding: 2rem;
-            max-width: 580px;
-            width: 92%;
-            max-height: 82vh;
-            overflow-y: auto;
-            position: relative;
+            background: white; border-radius: var(--radius);
+            padding: 2rem; max-width: 580px; width: 92%;
+            max-height: 82vh; overflow-y: auto; position: relative;
         }
         .modal-x {
-            position: absolute;
-            top: 1rem; right: 1.2rem;
-            background: none; border: none;
-            font-size: 1.6rem; cursor: pointer;
-            color: var(--muted); line-height: 1;
+            position: absolute; top: 1rem; right: 1.2rem;
+            background: none; border: none; font-size: 1.6rem;
+            cursor: pointer; color: var(--muted); line-height: 1;
         }
         .modal-x:hover { color: var(--text); }
         .modal-title { font-size: 1.1rem; font-weight: 800; line-height: 1.45; padding-right: 2rem; margin-bottom: 0.3rem; }
@@ -248,21 +172,17 @@
         .modal-sec { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 1.1rem 0 0.5rem; }
         .modal-desc { font-size: 0.875rem; line-height: 1.75; color: var(--text); }
         .remove-from-shelf {
-            display: block;
-            width: 100%;
-            margin-top: 1.25rem;
-            padding: 0.65rem;
-            background: #fee2e2;
-            border: none;
-            border-radius: 8px;
-            color: #ef4444;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.15s;
+            display: block; width: 100%; margin-top: 1.25rem;
+            padding: 0.65rem; background: #fee2e2; border: none;
+            border-radius: 8px; color: #ef4444; font-size: 0.875rem;
+            font-weight: 600; cursor: pointer; transition: background 0.15s;
         }
         .remove-from-shelf:hover { background: #fecaca; }
 
+        @media (max-width: 768px) {
+            .charts-row { grid-template-columns: 1fr; }
+            .top3-grid { grid-template-columns: 1fr; }
+        }
         @media (max-width: 600px) {
             main { padding: 0.75rem 1rem 3rem; }
             .book-grid { grid-template-columns: 1fr; }
@@ -277,8 +197,8 @@
     <a class="explore-btn" href="index.html">+ 도서 탐색하기</a>
 </header>
 
-<main>
-    <div id="content"></div>
+<main id="main">
+    <div class="empty"><div class="empty-icon">⏳</div><p>불러오는 중...</p></div>
 </main>
 
 <div id="overlay" onclick="onOverlayClick(event)">
@@ -291,43 +211,61 @@
 <script>
 const SHELF_KEY = 'bookpath_shelf';
 
-function loadShelf() {
+// KDC 분야 정보
+const KDC_INFO = {
+    '0': { name: '총류·컴퓨터', emoji: '📚', color: '#6366f1', desc: '도서관학, 컴퓨터 과학, 정보학 등 지식과 정보를 다루는 분야입니다.' },
+    '1': { name: '철학·심리',   emoji: '🤔', color: '#8b5cf6', desc: '인간의 사고, 감정, 윤리를 탐구하는 분야입니다. 심리학, 철학, 논리학 등을 포함합니다.' },
+    '2': { name: '종교',        emoji: '🙏', color: '#ec4899', desc: '세계의 다양한 종교와 신앙, 영성을 연구하는 분야입니다.' },
+    '3': { name: '사회과학',    emoji: '🏛️', color: '#f97316', desc: '경제, 정치, 법, 사회, 교육 등 인간 사회의 구조와 작동 방식을 연구합니다.' },
+    '4': { name: '자연과학',    emoji: '🔬', color: '#10b981', desc: '수학, 물리, 화학, 생물, 천문 등 자연 현상의 원리를 탐구합니다.' },
+    '5': { name: '기술·공학',   emoji: '⚙️', color: '#3b82f6', desc: '공학, 의학, 컴퓨터 등 과학 지식을 실용적으로 응용하는 분야입니다.' },
+    '6': { name: '예술',        emoji: '🎨', color: '#f59e0b', desc: '음악, 미술, 스포츠, 디자인 등 창의적 표현과 문화를 다루는 분야입니다.' },
+    '7': { name: '언어',        emoji: '🗣️', color: '#14b8a6', desc: '한국어, 영어 등 언어의 구조와 활용을 연구하고 외국어 능력을 기릅니다.' },
+    '8': { name: '문학',        emoji: '📖', color: '#ef4444', desc: '소설, 시, 희곡 등 언어 예술 작품을 창작하고 감상하는 분야입니다.' },
+    '9': { name: '역사·지리',   emoji: '🏺', color: '#84cc16', desc: '과거의 사건과 지구의 공간적 특성을 탐구하며 인류의 발자취를 따라갑니다.' },
+};
+
+let careerInfo = {};
+let curCareer = null;
+let chartKDC = null, chartCareer = null;
+
+// 서재 로드
+function getShelf() {
     try { return JSON.parse(localStorage.getItem(SHELF_KEY)) || []; }
     catch { return []; }
 }
-
-function saveShelf(shelf) {
-    localStorage.setItem(SHELF_KEY, JSON.stringify(shelf));
-}
+function saveShelf(shelf) { localStorage.setItem(SHELF_KEY, JSON.stringify(shelf)); }
 
 function removeBook(title) {
-    const shelf = loadShelf().filter(b => b.title !== title);
-    saveShelf(shelf);
-    render();
+    saveShelf(getShelf().filter(b => b.title !== title));
+    closeModal();
+    renderAll();
 }
 
 function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function cleanAuthor(a) { return (a||'저자 미상').replace(/\/\//g,'').trim(); }
+function cleanDesc(d) { return d ? d.replace(/\n\n/g,'\n').replace(/\n/g,' ') : ''; }
 
-function cleanAuthor(a) {
-    return (a || '저자 미상').replace(/\/\//g, '').trim();
-}
-
-// ── 필터 상태 ──────────────────────────────────────────────────────────────────
-let curCareer = null;
-
-function toggleFilter(career) {
-    curCareer = curCareer === career ? null : career;
-    render();
+// 집계 헬퍼
+function countBy(shelf, fn) {
+    const m = {};
+    shelf.forEach(b => {
+        const keys = fn(b);
+        (Array.isArray(keys) ? keys : [keys]).forEach(k => {
+            if (k) m[k] = (m[k] || 0) + 1;
+        });
+    });
+    return Object.entries(m).sort((a,b) => b[1]-a[1]);
 }
 
 // ── 렌더링 ─────────────────────────────────────────────────────────────────────
-function render() {
-    const shelf = loadShelf();
-    const el = document.getElementById('content');
+function renderAll() {
+    const shelf = getShelf();
+    const el = document.getElementById('main');
 
-    if (shelf.length === 0) {
+    if (!shelf.length) {
         el.innerHTML = `
             <div class="empty">
                 <div class="empty-icon">📭</div>
@@ -338,46 +276,95 @@ function render() {
         return;
     }
 
-    // 진로 태그 집계
-    const careerCounts = {};
-    shelf.forEach(b => (b.career_tags || []).forEach(c => {
-        careerCounts[c] = (careerCounts[c] || 0) + 1;
-    }));
-    const careers = Object.entries(careerCounts).sort((a, b) => b[1] - a[1]).map(([c]) => c);
+    // 집계
+    const kdcCounts  = countBy(shelf, b => b.kdc ? b.kdc[0] : null);
+    const careersAll = countBy(shelf, b => b.career_tags || []);
+    const uniqueCareers = new Set(shelf.flatMap(b => b.career_tags||[]));
+
+    // Top 3
+    const top3kdc    = kdcCounts.slice(0, 3);
+    const top3career = careersAll.slice(0, 3);
 
     // 필터 적용
     const shown = curCareer
-        ? shelf.filter(b => (b.career_tags || []).includes(curCareer))
+        ? shelf.filter(b => (b.career_tags||[]).includes(curCareer))
         : shelf;
 
-    // 관심 진로 수 (career_tags 중복 제거)
-    const uniqueCareers = new Set(shelf.flatMap(b => b.career_tags || []));
-
     el.innerHTML = `
+        <!-- 통계 바 -->
         <div class="stats-bar">
-            <div class="stat">
-                <span class="stat-num">${shelf.length}</span>
-                <span class="stat-label">담은 책</span>
+            <div class="stat"><span class="stat-num">${shelf.length}</span><span class="stat-label">담은 책</span></div>
+            <div class="stat-div"></div>
+            <div class="stat"><span class="stat-num">${uniqueCareers.size}</span><span class="stat-label">관심 진로</span></div>
+            <div class="stat-div"></div>
+            <div class="stat"><span class="stat-num">${new Set(shelf.map(b=>b.kdc?.[0])).size}</span><span class="stat-label">탐색 분야</span></div>
+        </div>
+
+        <!-- 분석 섹션 -->
+        <div class="analysis-section">
+            <div class="sec-title">📊 내 독서 성향 분석</div>
+
+            <!-- 차트 -->
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-title">분야 분포</div>
+                    <div class="chart-wrap"><canvas id="chart-kdc"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">진로 분포 (상위 8개)</div>
+                    <div class="chart-wrap"><canvas id="chart-career"></canvas></div>
+                </div>
             </div>
-            <div class="stat-divider"></div>
-            <div class="stat">
-                <span class="stat-num">${uniqueCareers.size}</span>
-                <span class="stat-label">관심 진로</span>
+
+            <!-- Top 3 분야 -->
+            <div class="top3-section">
+                <div class="sec-title">🏆 Top 3 관심 분야</div>
+                <div class="top3-grid">
+                    ${top3kdc.map(([k, cnt], i) => {
+                        const info = KDC_INFO[k] || { name: k+'00', emoji:'📁', color:'#6b7280', desc:'' };
+                        const medals = ['🥇','🥈','🥉'];
+                        return `<div class="top3-card" style="--c:${info.color}">
+                            <div class="top3-rank">${medals[i]} ${i+1}위</div>
+                            <div class="top3-header">
+                                <span class="top3-emoji">${info.emoji}</span>
+                                <span class="top3-name">${info.name}</span>
+                            </div>
+                            <div class="top3-count">${cnt}권</div>
+                            <div class="top3-desc">${esc(info.desc)}</div>
+                        </div>`;
+                    }).join('')}
+                </div>
             </div>
-            <div class="stat-divider"></div>
-            <div class="stat">
-                <span class="stat-num">${new Set(shelf.map(b => b.kdc?.[0])).size}</span>
-                <span class="stat-label">탐색 분야</span>
+
+            <!-- Top 3 진로 -->
+            <div class="top3-section">
+                <div class="sec-title">🎯 Top 3 관심 진로</div>
+                <div class="top3-grid">
+                    ${top3career.map(([name, cnt], i) => {
+                        const info = careerInfo[name] || { emoji:'💼', desc:'이 진로와 관련된 책들을 탐색해보세요.' };
+                        const medals = ['🥇','🥈','🥉'];
+                        return `<div class="top3-card" style="--c:#4f46e5">
+                            <div class="top3-rank">${medals[i]} ${i+1}위</div>
+                            <div class="top3-header">
+                                <span class="top3-emoji">${info.emoji}</span>
+                                <span class="top3-name">${esc(name)}</span>
+                            </div>
+                            <div class="top3-count">${cnt}권</div>
+                            <div class="top3-desc">${esc(info.desc)}</div>
+                        </div>`;
+                    }).join('')}
+                </div>
             </div>
         </div>
 
-        ${careers.length ? `
+        <!-- 진로 필터 -->
+        ${careersAll.length ? `
         <div class="filter-wrap">
             <div class="filter-label">🎯 진로별 보기</div>
             <div class="chip-row">
-                <span class="chip all ${!curCareer ? 'on' : ''}" onclick="toggleFilter(null)">전체 ${shelf.length}</span>
-                ${careers.map(c =>
-                    `<span class="chip ${curCareer === c ? 'on' : ''}" onclick="toggleFilter('${esc(c)}')">${esc(c)} ${careerCounts[c]}</span>`
+                <span class="chip ${!curCareer?'on':''}" onclick="setFilter(null)">전체 ${shelf.length}</span>
+                ${careersAll.map(([c,n]) =>
+                    `<span class="chip ${curCareer===c?'on':''}" onclick="setFilter('${esc(c)}')">${esc(c)} ${n}</span>`
                 ).join('')}
             </div>
         </div>` : ''}
@@ -386,6 +373,7 @@ function render() {
             <span class="result-count">${shown.length}권</span>
         </div>
 
+        <!-- 책 목록 -->
         <div class="book-grid">
             ${shown.map(b => `
             <div class="book-card">
@@ -393,51 +381,114 @@ function render() {
                 <div class="book-title" onclick="openModal('${esc(b.title)}')">${esc(b.title)}</div>
                 <div class="book-author">${esc(cleanAuthor(b.author))}</div>
                 <div class="tag-row">
-                    ${(b.career_tags || []).map(t => `<span class="tag career">${esc(t)}</span>`).join('')}
-                    ${(b.student_tags || []).slice(0, 2).map(t => `<span class="tag student">${esc(t)}</span>`).join('')}
+                    ${(b.career_tags||[]).map(t=>`<span class="tag career">${esc(t)}</span>`).join('')}
+                    ${(b.student_tags||[]).slice(0,2).map(t=>`<span class="tag student">${esc(t)}</span>`).join('')}
                 </div>
-                <div class="book-date">📅 ${b._saved_at || ''}</div>
+                <div class="book-date">📅 ${b._saved_at||''}</div>
             </div>`).join('')}
         </div>`;
+
+    // 차트 그리기
+    drawCharts(kdcCounts, careersAll);
+}
+
+function setFilter(career) {
+    curCareer = career;
+    renderAll();
+}
+
+// ── 차트 ─────────────────────────────────────────────────────────────────────
+function drawCharts(kdcCounts, careersAll) {
+    // KDC 도넛 차트
+    const kdcEl = document.getElementById('chart-kdc');
+    if (kdcEl) {
+        if (chartKDC) chartKDC.destroy();
+        const kdcLabels = kdcCounts.map(([k]) => (KDC_INFO[k]?.emoji||'') + ' ' + (KDC_INFO[k]?.name || k+'00'));
+        const kdcData   = kdcCounts.map(([,v]) => v);
+        const kdcColors = kdcCounts.map(([k]) => KDC_INFO[k]?.color || '#6b7280');
+        chartKDC = new Chart(kdcEl, {
+            type: 'doughnut',
+            data: {
+                labels: kdcLabels,
+                datasets: [{ data: kdcData, backgroundColor: kdcColors, borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+
+    // 진로 가로 바 차트 (상위 8개)
+    const careerEl = document.getElementById('chart-career');
+    if (careerEl) {
+        if (chartCareer) chartCareer.destroy();
+        const top8 = careersAll.slice(0, 8);
+        const labels = top8.map(([c]) => c);
+        const data   = top8.map(([,v]) => v);
+        chartCareer = new Chart(careerEl, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    data,
+                    backgroundColor: '#c4b5fd',
+                    borderColor: '#7c3aed',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+                    y: { ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+    }
 }
 
 // ── 모달 ─────────────────────────────────────────────────────────────────────
 function openModal(title) {
-    const b = loadShelf().find(b => b.title === title);
+    const b = getShelf().find(b => b.title === title);
     if (!b) return;
     document.getElementById('modal-body').innerHTML = `
         <div class="modal-title">${esc(b.title)}</div>
         <div class="modal-author">${esc(cleanAuthor(b.author))}</div>
         ${b.description
             ? `<div class="modal-sec">책 소개</div>
-               <div class="modal-desc">${esc(b.description).replace(/\n/g, '<br>')}</div>`
+               <div class="modal-desc">${esc(cleanDesc(b.description))}</div>`
             : ''}
-        ${(b.career_tags || []).length
+        ${(b.career_tags||[]).length
             ? `<div class="modal-sec">🎯 관련 진로</div>
-               <div class="tag-row">${b.career_tags.map(t => `<span class="tag career">${esc(t)}</span>`).join('')}</div>`
+               <div class="tag-row">${b.career_tags.map(t=>`<span class="tag career">${esc(t)}</span>`).join('')}</div>`
             : ''}
-        ${(b.student_tags || []).length
+        ${(b.student_tags||[]).length
             ? `<div class="modal-sec">🔖 키워드</div>
-               <div class="tag-row">${b.student_tags.map(t => `<span class="tag student">${esc(t)}</span>`).join('')}</div>`
+               <div class="tag-row">${b.student_tags.map(t=>`<span class="tag student">${esc(t)}</span>`).join('')}</div>`
             : ''}
-        <button class="remove-from-shelf" onclick="removeBook('${esc(b.title)}'); closeModal()">
+        <button class="remove-from-shelf" onclick="removeBook('${esc(b.title)}')">
             🗑️ 서재에서 제거
-        </button>
-    `;
+        </button>`;
     document.getElementById('overlay').classList.add('open');
 }
 
-function closeModal() {
-    document.getElementById('overlay').classList.remove('open');
-}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function onOverlayClick(e) { if (e.target===document.getElementById('overlay')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
 
-function onOverlayClick(e) {
-    if (e.target === document.getElementById('overlay')) closeModal();
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-render();
+// ── 초기화 ────────────────────────────────────────────────────────────────────
+fetch('data/career_info.json')
+    .then(r => r.json())
+    .then(d => { careerInfo = d; })
+    .catch(() => {})
+    .finally(() => renderAll());
 </script>
 </body>
 </html>

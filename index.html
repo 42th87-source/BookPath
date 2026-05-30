@@ -538,7 +538,7 @@ function openBook(i) {
         <div class="modal-author">${esc(cleanAuthor(b.author))}</div>
         ${b.description
             ? `<div class="modal-sec">책 소개</div>
-               <div class="modal-desc">${esc(b.description).replace(/\n/g,'<br>')}</div>`
+               <div class="modal-desc">${esc(b.description).replace(/\n\n/g,'<br><br>').replace(/\n/g,' ')}</div>`
             : ''}
         ${(b.career_tags||[]).length
             ? `<div class="modal-sec">🎯 관련 진로</div>
