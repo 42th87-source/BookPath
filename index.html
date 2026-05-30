@@ -325,6 +325,112 @@
         }
 
 
+        /* ── 옆 서가 (도서관 효과) ── */
+        .sideshelf-modal {
+            margin-top: 1.5rem;
+            border-top: 1.5px dashed #e0e7ff;
+            padding-top: 1.25rem;
+        }
+        .sideshelf-modal-header {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #6366f1;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.75rem;
+        }
+        .sideshelf-connection {
+            background: linear-gradient(135deg, #f5f3ff, #faf5ff);
+            border: 1.5px solid #ddd6fe;
+            border-radius: 12px;
+            padding: 1rem 1.1rem;
+            margin-bottom: 0.75rem;
+        }
+        .sideshelf-message {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 0.3rem;
+        }
+        .sideshelf-reason {
+            font-size: 0.76rem;
+            color: var(--muted);
+            margin-bottom: 0.8rem;
+        }
+        .sideshelf-books {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        .sideshelf-book {
+            background: white;
+            border-radius: 8px;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        .sideshelf-book:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .sideshelf-book-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 0.25rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .sideshelf-book-tags { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+        .sideshelf-book-tag {
+            font-size: 0.62rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            background: #ede9fe;
+            color: #5b21b6;
+            font-weight: 600;
+        }
+
+        /* Level 3 하단 배너 */
+        .sideshelf-banner {
+            margin-top: 2.5rem;
+            border-top: 1.5px dashed #e0e7ff;
+            padding-top: 1.25rem;
+        }
+        .sideshelf-banner-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #6366f1;
+            margin-bottom: 0.75rem;
+        }
+        .sideshelf-banner-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.65rem;
+        }
+        .sideshelf-banner-card {
+            background: white;
+            border: 1.5px solid #ddd6fe;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .sideshelf-banner-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(99,102,241,0.15);
+        }
+        .sideshelf-banner-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 0.3rem;
+        }
+        .sideshelf-banner-reason {
+            font-size: 0.73rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
         /* ── Empty / Loading ── */
         .empty {
             text-align: center;
@@ -446,19 +552,20 @@ const COLORS = {
 const col = code => COLORS[String(code)[0]] || { c: '#6b7280', cl: '#f3f4f6' };
 
 // ── 전역 상태 ──────────────────────────────────────────────────────────────────
-let tree = null, books = [], careerInfo = {};
+let tree = null, books = [], careerInfo = {}, sideShelfMap = {};
 let curCat = null, curSub = null, curCareers = [];
 let searchScopes = new Set(['all']); // 검색 범위: all | title | author | career | keyword
 
 // ── 데이터 로딩 ────────────────────────────────────────────────────────────────
 async function init() {
     try {
-        const [t, b, ci] = await Promise.all([
+        const [t, b, ci, sm] = await Promise.all([
             fetch('data/kdc_tree.json').then(r => r.json()),
             fetch('data/books_tagged.json').then(r => r.json()),
             fetch('data/career_info.json').then(r => r.json()),
+            fetch('data/side_shelf_map.json').then(r => r.json()),
         ]);
-        tree = t; books = b; careerInfo = ci;
+        tree = t; books = b; careerInfo = ci; sideShelfMap = sm;
         goHome();
     } catch {
         document.getElementById('main').innerHTML =
@@ -523,7 +630,7 @@ function renderL1() {
         </div>`;
     }).join('');
     document.getElementById('main').innerHTML =
-        `<div class="section-title">📚 분야를 선택하세요</div><div class="cat-grid">${cards}</div>`;
+        `<div class="section-title">📚 진로 서가 — 분야를 선택하세요</div><div class="cat-grid">${cards}</div>`;
 }
 
 // ── Level 2: 세부분류 카드 ────────────────────────────────────────────────────
@@ -561,12 +668,14 @@ function renderL3() {
            </div>`
         : '';
 
+    const kdcKey = curSub.code[0];
     document.getElementById('main').innerHTML =
         `<button class="back-btn" onclick="pickCat('${curCat.id}')">← ${curCat.name}</button>
          <div class="section-title">${curSub.name} <span style="font-weight:400;font-size:0.9rem;color:var(--muted)">(${filtered.length}권)</span></div>
          ${chips}
          <div id="career-panel" style="display:none"></div>
-         <div id="book-list"></div>`;
+         <div id="book-list"></div>
+         ${renderSideShelfBanner(kdcKey)}`;
     renderBooks();
 }
 
@@ -664,6 +773,7 @@ function openBook(i) {
         <button id="shelf-toggle-btn" class="add-shelf-btn" onclick="toggleShelf('${esc(b.title)}')">
             🗂️ 서재에 담기
         </button>
+        ${renderSideShelfModal(b)}
     `;
     updateShelfBtn(b.title);
     document.getElementById('overlay').classList.add('open');
@@ -678,6 +788,95 @@ function onOverlayClick(e) {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── 도서관 효과 (옆 서가 추천) ────────────────────────────────────────────────
+const KDC_NAMES = {
+    '000':'총류·컴퓨터','100':'철학·심리','200':'종교','300':'사회과학',
+    '400':'자연과학','500':'기술·공학','600':'예술','700':'언어',
+    '800':'문학','900':'역사·지리'
+};
+
+function findSideShelfBooks(currentBook, connection, count = 2) {
+    const targetKey = connection.target_kdc[0];
+    let pool = books.filter(b => b.kdc && b.kdc[0] === targetKey);
+    if (!pool.length) return [];
+
+    // themes가 있으면 겹치는 책 우선
+    if (currentBook.themes && currentBook.themes.length) {
+        const themed = pool.filter(b =>
+            b.themes && b.themes.some(t =>
+                currentBook.themes.includes(t) || connection.themes.includes(t)
+            )
+        );
+        if (themed.length >= count) pool = themed;
+    }
+    // 랜덤 셔플 후 반환
+    return pool.sort(() => Math.random() - 0.5).slice(0, count);
+}
+
+function renderSideShelfModal(book) {
+    const kdcKey = (book.kdc || '0')[0];
+    const connections = (sideShelfMap.connections || {})[kdcKey] || [];
+    if (!connections.length) return '';
+
+    // 최대 2개 connection 표시
+    const sections = connections.slice(0, 2).map(conn => {
+        const recs = findSideShelfBooks(book, conn, 2);
+        if (!recs.length) return '';
+        const targetName = KDC_NAMES[conn.target_kdc] || conn.target_kdc;
+        const bookCards = recs.map((b, i) => `
+            <div class="sideshelf-book" onclick="openSideShelfBook(${books.indexOf(b)})">
+                <div class="sideshelf-book-title">${esc(b.title)}</div>
+                <div class="sideshelf-book-tags">
+                    ${(b.career_tags||[]).slice(0,2).map(t=>
+                        `<span class="sideshelf-book-tag">${esc(t)}</span>`).join('')}
+                </div>
+            </div>`).join('');
+        return `<div class="sideshelf-connection">
+            <div class="sideshelf-message">"${esc(conn.label)}의 시각에서 진로를 찾아볼까요?"</div>
+            <div class="sideshelf-reason">${esc(conn.reason)} → ${targetName}</div>
+            <div class="sideshelf-books">${bookCards}</div>
+        </div>`;
+    }).filter(Boolean).join('');
+
+    if (!sections) return '';
+    return `<div class="sideshelf-modal">
+        <div class="sideshelf-modal-header">📚 옆 서가에서 발견</div>
+        ${sections}
+    </div>`;
+}
+
+function renderSideShelfBanner(kdcKey) {
+    const connections = (sideShelfMap.connections || {})[kdcKey] || [];
+    if (!connections.length) return '';
+
+    const cards = connections.map(conn => {
+        const targetName = KDC_NAMES[conn.target_kdc] || conn.target_kdc;
+        return `<div class="sideshelf-banner-card" onclick="pickKdcByCode('${conn.target_kdc}')">
+            <div class="sideshelf-banner-label">→ ${esc(conn.label)}</div>
+            <div class="sideshelf-banner-reason">${esc(conn.reason)}</div>
+        </div>`;
+    }).join('');
+
+    return `<div class="sideshelf-banner">
+        <div class="sideshelf-banner-title">🔀 이 서가 옆에는 어떤 책들이 있을까요?</div>
+        <div class="sideshelf-banner-grid">${cards}</div>
+    </div>`;
+}
+
+function pickKdcByCode(code) {
+    const key = code[0];
+    const cat = tree.children.find(c => c.code[0] === key);
+    if (cat) { pickCat(cat.id); }
+}
+
+function openSideShelfBook(idx) {
+    if (idx < 0 || idx >= books.length) return;
+    const prev = window._shownBooks;
+    window._shownBooks = books;
+    openBook(idx);
+    window._shownBooks = prev;
+}
 
 // ── 검색 ─────────────────────────────────────────────────────────────────────
 let searchTimer = null;
