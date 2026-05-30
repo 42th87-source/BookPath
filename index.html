@@ -54,6 +54,59 @@
         .shelf-btn:hover { background: #e2e8f0; }
         .logo span { font-weight: 400; font-size: 0.9rem; color: var(--muted); margin-left: 0.5rem; }
 
+        /* ── Search ── */
+        .search-wrap {
+            flex: 1;
+            max-width: 420px;
+            margin: 0 1.25rem;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.5rem 2.5rem 0.5rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+            background: white;
+        }
+        .search-clear {
+            position: absolute;
+            right: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            line-height: 1;
+            padding: 0.1rem;
+        }
+        .search-clear.show { display: block; }
+        .search-result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .search-result-title { font-size: 1.05rem; font-weight: 700; }
+        .search-result-count { font-size: 0.85rem; color: var(--muted); }
+        @media (max-width: 640px) {
+            .search-wrap { max-width: none; margin: 0 0.5rem; }
+            .logo span { display: none; }
+        }
+
         /* ── Breadcrumb ── */
         #breadcrumb {
             padding: 0.85rem 2rem;
@@ -301,6 +354,12 @@
 
 <header>
     <div class="logo" onclick="goHome()">📚 BookPath<span>책으로 찾는 나의 진로</span></div>
+    <div class="search-wrap">
+        <input class="search-input" id="search-input" type="text"
+               placeholder="책 제목, 저자, 진로 검색..."
+               oninput="onSearch(this.value)">
+        <button class="search-clear" id="search-clear" onclick="clearSearch()">×</button>
+    </div>
     <a class="shelf-btn" href="my-shelf.html">🗂️ 내 서재</a>
 </header>
 
@@ -565,6 +624,94 @@ function onOverlayClick(e) {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── 검색 ─────────────────────────────────────────────────────────────────────
+let searchTimer = null;
+
+function onSearch(val) {
+    const clearBtn = document.getElementById('search-clear');
+    clearBtn.classList.toggle('show', val.length > 0);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        const q = val.trim();
+        if (q) renderSearchResults(q);
+        else restoreView();
+    }, 250);
+}
+
+function clearSearch() {
+    const input = document.getElementById('search-input');
+    input.value = '';
+    document.getElementById('search-clear').classList.remove('show');
+    restoreView();
+    input.focus();
+}
+
+function restoreView() {
+    renderBreadcrumb();
+    if (curSub) renderL3();
+    else if (curCat) renderL2();
+    else renderL1();
+}
+
+function renderSearchResults(query) {
+    const q = query.toLowerCase();
+    const results = books.filter(b =>
+        b.title?.toLowerCase().includes(q) ||
+        b.author?.toLowerCase().includes(q) ||
+        (b.career_tags || []).some(t => t.toLowerCase().includes(q)) ||
+        (b.student_tags || []).some(t => t.toLowerCase().includes(q))
+    );
+
+    // 브레드크럼 검색 모드로 변경
+    document.getElementById('breadcrumb').innerHTML =
+        `<span class="bc-link" onclick="clearSearch()">전체 분야</span>
+         <span class="bc-sep">›</span>
+         <span class="bc-cur">🔍 "${esc(query)}" 검색 결과</span>`;
+
+    if (!results.length) {
+        document.getElementById('main').innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">🔍</div>
+                <p><strong>"${esc(query)}"</strong>에 대한 결과가 없습니다.</p>
+                <p style="margin-top:0.5rem;font-size:0.85rem">제목, 저자, 진로명으로 검색해보세요.</p>
+            </div>`;
+        return;
+    }
+
+    // 최대 60개 표시
+    const shown = results.slice(0, 60);
+    window._shownBooks = shown;
+
+    const highlight = (text) => {
+        if (!text) return '';
+        return esc(text).replace(
+            new RegExp(esc(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+            m => `<mark style="background:#fef08a;border-radius:2px;padding:0 1px">${m}</mark>`
+        );
+    };
+
+    document.getElementById('main').innerHTML = `
+        <div class="search-result-header">
+            <span class="search-result-title">🔍 "${esc(query)}" 검색 결과</span>
+            <span class="search-result-count">${results.length}권${results.length > 60 ? ' (상위 60권 표시)' : ''}</span>
+        </div>
+        <div class="book-grid">
+            ${shown.map((b, i) => `
+            <div class="book-card" onclick="openBook(${i})">
+                <div class="book-title">${highlight(b.title)}</div>
+                <div class="book-author">${highlight(cleanAuthor(b.author))}</div>
+                <div class="tag-row">
+                    ${(b.career_tags || []).map(t =>
+                        `<span class="tag career">${highlight(t)}</span>`
+                    ).join('')}
+                    ${(b.student_tags || []).slice(0, 2).map(t =>
+                        `<span class="tag student">${esc(t)}</span>`
+                    ).join('')}
+                </div>
+            </div>`).join('')}
+        </div>`;
+}
 
 // ── 서재 ─────────────────────────────────────────────────────────────────────
 const SHELF_KEY = 'bookpath_shelf';
